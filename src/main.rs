@@ -37,9 +37,9 @@ fn main() {
     }
 }
 
-fn run_day(day: &String)
+fn run_day(input: &str)
 {
-    let result: Result<(String, Day), String> = parse_i32(day)
+    let result: Result<(String, Day), String> = parse_i32(input)
         .and_then(|d| read_input(d).and_then(|input| get_day(d).and_then(|day| Ok((input, day)))));
     match result {
         Ok((input, day)) => {
@@ -52,7 +52,7 @@ fn run_day(day: &String)
     }
 }
 
-fn add_day(input: &String)
+fn add_day(input: &str)
 {
     // This is going to be fun. Write code to modify the running code! Woohoo!
     match parse_i32(input) {
