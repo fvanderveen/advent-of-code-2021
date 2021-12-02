@@ -7,3 +7,7 @@ Last year's adventure can be found [here](https://gitlab.rnd.mendix.com/fabian/a
 ## Run a day
 
 `cargo run day <day number>`
+
+## Add a day
+
+`cargo run add <day number>`

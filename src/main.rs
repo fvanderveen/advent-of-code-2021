@@ -28,6 +28,9 @@ fn main() {
         "day" => {
             run_day(&a[2])
         }
+        "add" => {
+            add_day(&a[2])
+        }
         _ => {
             print_usage();
         }
@@ -45,6 +48,22 @@ fn run_day(day: &String)
         }
         Err(err) => {
             eprintln!("{}", err);
+        }
+    }
+}
+
+fn add_day(input: &String)
+{
+    // This is going to be fun. Write code to modify the running code! Woohoo!
+    match parse_i32(input) {
+        Ok(day) => {
+            match util::create_day::create_day(day) {
+                Ok(_) => { println!("Successfully added day {}", day); }
+                Err(e) => { panic!("{}", e); }
+            }
+        }
+        Err(err) => {
+            panic!("{}", err);
         }
     }
 }
