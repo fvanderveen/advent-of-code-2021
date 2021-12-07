@@ -2,7 +2,7 @@
 
 Welcome. This will be the second year I'm attempting this in [rust](https://www.rust-lang.org/).
 
-Last year's adventure can be found [here](https://github.com/fvanderveen/advent-of-code-2021).
+Last year's adventure can be found [here](https://github.com/fvanderveen/advent-of-code-2020).
 
 ## Run a day
 
