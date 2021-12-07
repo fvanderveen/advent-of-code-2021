@@ -11,3 +11,11 @@ fn puzzle1(input: &String) {
 fn puzzle2(input: &String) {
     todo!("Implement puzzle 2");
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_something() {
+        todo!("Implement tests");
+    }
+}
