@@ -1,7 +1,7 @@
 use std::cmp::max;
 use std::collections::HashMap;
 use crate::days::Day;
-use crate::util::number;
+use crate::util::geometry::{Point, Line, GetPoints};
 
 pub const DAY5: Day = Day {
     puzzle1,
@@ -28,28 +28,8 @@ fn puzzle2(input: &String) {
     println!("Puzzle 2 answer: {}", result);
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
-struct Point {
-    x: i128,
-    y: i128,
-}
-
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-struct Line {
-    start: Point,
-    end: Point,
-}
-
 fn parse_point(input: &str) -> Result<Point, String> {
-    let parts: Vec<&str> = input.split(",").collect();
-    if parts.len() != 2 { return Err(format!("Expected point x,y, but got: {}", input)); }
-
-    let parse_result: Result<Vec<i128>, String> = parts.iter().map(|i| number::parse_i128(i)).collect();
-
-    match parse_result {
-        Ok(v) => Ok(Point { x: v[0], y: v[1] }),
-        Err(e) => Err(e)
-    }
+    input.parse()
 }
 
 fn parse_line(input: &str) -> Result<Line, String> {
@@ -104,45 +84,10 @@ fn is_horizontal_or_vertical_line(line: &Line) -> bool {
     line.start.x == line.end.x || line.start.y == line.end.y
 }
 
-trait GetPoints {
-    fn get_points(&self) -> Vec<Point>;
-}
-
-impl GetPoints for Line {
-    fn get_points(&self) -> Vec<Point> {
-        let mut points: Vec<Point> = vec![];
-
-        let length = self.end.x - self.start.x;
-        let height = self.end.y - self.start.y;
-
-        if length == 0 && height == 0 {
-            return points;
-        }
-
-        // Given the puzzle, the lines seem to be either horizontal, vertical, or 45deg.
-        // We'll panic for any other case for now.
-        if length != 0 && height != 0 && length.abs() != height.abs() {
-            panic!("Cannot get points for line {:?}", self);
-        }
-
-        let dx: i128 = if length == 0 { 0 } else if length > 0 { 1 } else { -1 };
-        let dy: i128 = if height == 0 { 0 } else if height > 0 { 1 } else { -1 };
-        let steps = max(length.abs(), height.abs());
-
-        for i in 0..steps + 1 {
-            let x = self.start.x + i * dx;
-            let y = self.start.y + i * dy;
-            points.push(Point { x, y });
-        }
-
-        points
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-    use crate::days::day05::{build_vent_map, Cell, GetPoints, Line, parse_line, parse_lines, parse_point, Point, VentMap};
+    use crate::days::day05::{build_vent_map, Cell, Line, parse_line, parse_lines, parse_point, Point, VentMap};
 
     #[test]
     fn test_parse_point() {
@@ -162,19 +107,12 @@ mod tests {
         assert!(parse_line("12,0 <- 12,5").is_err());
     }
 
-    const fn point(x: i128, y: i128) -> Point {
+    const fn point(x: usize, y: usize) -> Point {
         Point { x, y }
     }
 
-    const fn line(x1: i128, y1: i128, x2: i128, y2: i128) -> Line {
+    const fn line(x1: usize, y1: usize, x2: usize, y2: usize) -> Line {
         Line { start: point(x1, y1), end: point(x2, y2) }
-    }
-
-    #[test]
-    fn test_get_points() {
-        assert_eq!(line(12, 0, 12, 6).get_points(), vec![point(12, 0), point(12, 1), point(12, 2), point(12, 3), point(12, 4), point(12, 5), point(12, 6)]);
-        assert_eq!(line(2, 2, 4, 4).get_points(), vec![point(2, 2), point(3, 3), point(4, 4)]);
-        assert_eq!(line(4, 0, 2, 0).get_points(), vec![point(4, 0), point(3, 0), point(2, 0)]);
     }
 
     const EXAMPLE_INPUT: &str = "\
