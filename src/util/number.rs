@@ -21,3 +21,30 @@ parse_int_impl! {
     i128, parse_i128
     isize, parse_isize
 }
+
+pub fn parse_binary(binary: &str) -> usize {
+    let mut result = 0;
+
+    for char in binary.chars() {
+        result <<= 1;
+        match char {
+            '1' => result += 1,
+            '0' => {},
+            _ => panic!("Invalid binary character: {}", char)
+        }
+    }
+
+    result
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::util::number::parse_binary;
+
+    #[test]
+    fn test_parse_binary() {
+        assert_eq!(parse_binary("0101"), 5);
+        assert_eq!(parse_binary("1111"), 15);
+        assert_eq!(parse_binary("1000000"), 64);
+    }
+}

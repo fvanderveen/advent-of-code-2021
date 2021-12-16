@@ -117,7 +117,7 @@ fn build_real_map(segment: &Grid) -> Grid {
 #[cfg(test)]
 mod tests {
     use crate::days::day15::{build_real_map, find_lowest_risk_path_cost};
-    use crate::util::geometry::{Grid, Point};
+    use crate::util::geometry::{Grid};
 
     const EXAMPLE_INPUT: &str = "\
         1163751742\n\
