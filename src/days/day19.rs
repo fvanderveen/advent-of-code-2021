@@ -147,24 +147,6 @@ struct Scanner {
     points: Vec<Point3D>,
 }
 
-impl Scanner {
-    fn translate(&self, by: &Point3D) -> Scanner {
-        Scanner {
-            name: self.name.clone(),
-            location: self.location.translate(by),
-            points: self.points.iter().map(|p| p.translate(by)).collect(),
-        }
-    }
-
-    fn rotate(&self, facing: FacingDirection, rotation: usize) -> Self {
-        Scanner {
-            name: self.name.clone(),
-            location: self.location.rotate(facing, rotation),
-            points: self.points.iter().map(|p| p.rotate(facing, rotation)).collect(),
-        }
-    }
-}
-
 fn parse_scanner(input: &str) -> Result<Scanner, String> {
     // Skip the first line, with the `--- scanner # ---`
     let lines: Vec<&str> = input.lines().collect();
@@ -244,8 +226,26 @@ fn map_scanners(scanners: &Vec<Scanner>) -> Vec<Scanner> {
 
 #[cfg(test)]
 mod tests {
-    use crate::days::day19::{find_match, map_all_beacons, parse_input, Point3D};
+    use crate::days::day19::{FacingDirection, find_match, map_all_beacons, parse_input, Point3D, Scanner};
     use crate::days::day19::FacingDirection::{XNeg, YNeg};
+
+    impl Scanner {
+        fn translate(&self, by: &Point3D) -> Scanner {
+            Scanner {
+                name: self.name.clone(),
+                location: self.location.translate(by),
+                points: self.points.iter().map(|p| p.translate(by)).collect(),
+            }
+        }
+
+        fn rotate(&self, facing: FacingDirection, rotation: usize) -> Self {
+            Scanner {
+                name: self.name.clone(),
+                location: self.location.rotate(facing, rotation),
+                points: self.points.iter().map(|p| p.rotate(facing, rotation)).collect(),
+            }
+        }
+    }
 
     #[test]
     fn test_find_match() {
