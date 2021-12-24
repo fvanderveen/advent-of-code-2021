@@ -1,4 +1,4 @@
-use std::cmp::max;
+use std::cmp::{max, Ordering};
 use std::collections::HashMap;
 use std::fmt;
 use std::hash::Hash;
@@ -70,6 +70,113 @@ mod point_tests {
     #[test]
     fn test_format() {
         assert_eq!(format!("{}", Point { x: 5, y: -10 }), "(5,-10)");
+    }
+}
+
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Hash)]
+pub struct Point3D {
+    pub x: isize,
+    pub y: isize,
+    pub z: isize,
+}
+
+impl std::fmt::Display for Point3D {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({},{},{})", self.x, self.y, self.z)
+    }
+}
+
+impl From<(isize, isize, isize)> for Point3D {
+    fn from((x,y,z): (isize, isize, isize)) -> Self {
+        Self { x, y, z }
+    }
+}
+
+impl From<Point> for Point3D {
+    fn from(p: Point) -> Self {
+        Self { x: p.x, y: p.y, ..Self::default() }
+    }
+}
+
+impl FromStr for Point3D {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let points = s.split(",").map(|p| number::parse_isize(p)).collect::<Result<Vec<isize>, String>>()?;
+        if points.len() != 3 {
+            Err(format!("Expected three coordinates, but got {}", points.len()))
+        } else {
+            Ok(Point3D { x: points[0], y: points[1], z: points[2] })
+        }
+    }
+}
+
+impl PartialOrd<Self> for Point3D {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Point3D {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.x.cmp(&other.x)
+            .then_with(|| self.y.cmp(&other.y))
+            .then_with(|| self.z.cmp(&other.z))
+    }
+}
+
+impl Point3D {
+    pub fn distance(&self, other: &Self) -> Self {
+        Point3D {
+            x: other.x - self.x,
+            y: other.y - self.y,
+            z: other.z - self.z,
+        }
+    }
+
+    pub fn manhattan(&self, other: &Self) -> usize {
+        let x = (self.x - other.x).abs();
+        let y = (self.y - other.y).abs();
+        let z = (self.z - other.z).abs();
+        return (x + y + z) as usize;
+    }
+
+    pub fn translate(&self, other: &Self) -> Self {
+        Point3D {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+        }
+    }
+}
+
+#[cfg(test)]
+mod point3d_tests {
+    use crate::util::geometry::{Point, Point3D};
+    #[test]
+    fn test_from_str() {
+        assert_eq!("3,5,2".parse(), Ok(Point3D { x: 3, y: 5, z: 2 }));
+        assert_eq!("3,-5,0".parse(), Ok(Point3D { x: 3, y: -5, z:0 }));
+        assert_eq!("422,-2345,-99".parse(), Ok(Point3D { x: 422, y: -2345, z: -99 }));
+    }
+
+    #[test]
+    fn test_from() {
+        assert_eq!(Point3D::from((3, 5, 42)), Point3D { x: 3, y: 5, z: 42 });
+        assert_eq!(Point3D::from((-42, -10, -211)), Point3D { x: -42, y: -10, z: -211 });
+        assert_eq!(Point3D::from(Point { x: 10, y: -20 }), Point3D { x: 10, y: -20, z: 0 });
+    }
+
+    #[test]
+    fn test_format() {
+        assert_eq!(format!("{}", Point3D { x: 5, y: -10, z: 20 }), "(5,-10,20)");
+    }
+
+    #[test]
+    fn test_manhattan() {
+        assert_eq!(Point3D { x: 1105, y: -1205, z: 1229 }.manhattan(&Point3D { x: -92, y: -2380, z: -20 }), 3621);
+        assert_eq!(Point3D { x: -92, y: -2380, z: -20 }.manhattan(&Point3D { x: 1105, y: -1205, z: 1229 }), 3621);
     }
 }
 
@@ -237,7 +344,7 @@ pub enum Directions {
     Vertical = 2,
     Diagonal = 4,
     NonDiagonal = 3,
-    All = 7
+    All = 7,
 }
 
 impl Directions {

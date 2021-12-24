@@ -1,10 +1,8 @@
-use std::cmp::Ordering;
-use std::str::FromStr;
 use regex::Regex;
 use crate::days::Day;
 use crate::days::day19::FacingDirection::{XNeg, XPos, YNeg, YPos, ZNeg, ZPos};
 use crate::util::collection::CollectionExtension;
-use crate::util::number::parse_isize;
+use crate::util::geometry::Point3D;
 
 pub const DAY19: Day = Day {
     puzzle1,
@@ -36,77 +34,10 @@ fn puzzle2(input: &String) {
     println!("Puzzle 2 answer: {}", max_manhattan);
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-struct Point3D {
-    x: isize,
-    y: isize,
-    z: isize,
-}
-
-impl std::fmt::Display for Point3D {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{},{},{}", self.x, self.y, self.z)
-    }
-}
-
-impl FromStr for Point3D {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let points = s.split(",").map(|p| parse_isize(p)).collect::<Result<Vec<isize>, String>>()?;
-        if points.len() != 3 {
-            Err(format!("Expected three coordinates, but got {}", points.len()))
-        } else {
-            Ok(Point3D { x: points[0], y: points[1], z: points[2] })
-        }
-    }
-}
-
-impl PartialOrd<Self> for Point3D {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for Point3D {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.x.cmp(&other.x)
-            .then_with(|| self.y.cmp(&other.y))
-            .then_with(|| self.z.cmp(&other.z))
-    }
-}
-
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 enum FacingDirection { XPos, XNeg, YPos, YNeg, ZPos, ZNeg }
 
 impl Point3D {
-    fn empty() -> Self {
-        Point3D { x: 0, y: 0, z: 0 }
-    }
-
-    fn distance(&self, other: &Self) -> Self {
-        Point3D {
-            x: other.x - self.x,
-            y: other.y - self.y,
-            z: other.z - self.z,
-        }
-    }
-
-    fn manhattan(&self, other: &Self) -> usize {
-        let x = (self.x - other.x).abs();
-        let y = (self.y - other.y).abs();
-        let z = (self.z - other.z).abs();
-        return (x + y + z) as usize;
-    }
-
-    fn translate(&self, other: &Self) -> Self {
-        Point3D {
-            x: self.x + other.x,
-            y: self.y + other.y,
-            z: self.z + other.z,
-        }
-    }
-
     fn rotate(&self, facing: FacingDirection, rotation: usize) -> Point3D {
         let turned = match facing {
             FacingDirection::XPos => self.clone(),
@@ -154,7 +85,7 @@ fn parse_scanner(input: &str) -> Result<Scanner, String> {
     let name = regex.captures(lines[0]).and_then(|c| c.get(0)).map(|m| m.as_str().to_owned()).ok_or("No name found".to_owned())?;
 
     let points: Vec<Point3D> = lines.iter().skip(1).map(|l| l.parse()).collect::<Result<Vec<Point3D>, String>>()?;
-    Ok(Scanner { name, location: Point3D::empty(), points })
+    Ok(Scanner { name, location: Point3D::default(), points })
 }
 
 fn parse_input(input: &str) -> Result<Vec<Scanner>, String> {
@@ -226,8 +157,9 @@ fn map_scanners(scanners: &Vec<Scanner>) -> Vec<Scanner> {
 
 #[cfg(test)]
 mod tests {
-    use crate::days::day19::{FacingDirection, find_match, map_all_beacons, parse_input, Point3D, Scanner};
+    use crate::days::day19::{FacingDirection, find_match, map_all_beacons, parse_input, Scanner};
     use crate::days::day19::FacingDirection::{XNeg, YNeg};
+    use crate::util::geometry::Point3D;
 
     impl Scanner {
         fn translate(&self, by: &Point3D) -> Scanner {
@@ -274,12 +206,6 @@ mod tests {
 
         assert_eq!(beacons.len(), 79);
         assert_eq!(beacons, expected);
-    }
-
-    #[test]
-    fn test_manhattan() {
-        assert_eq!(Point3D { x: 1105, y: -1205, z: 1229 }.manhattan(&Point3D { x: -92, y: -2380, z: -20 }), 3621);
-        assert_eq!(Point3D { x: -92, y: -2380, z: -20 }.manhattan(&Point3D { x: 1105, y: -1205, z: 1229 }), 3621);
     }
 
     const EXAMPLE_INPUT: &str = "\
