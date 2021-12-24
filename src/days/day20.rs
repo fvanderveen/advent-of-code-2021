@@ -1,8 +1,7 @@
 use std::collections::HashMap;
-use std::hash::Hash;
-use std::ops::RangeInclusive;
 use std::str::FromStr;
 use crate::days::Day;
+use crate::util::geometry::{Bounds, Point};
 
 pub const DAY20: Day = Day {
     puzzle1,
@@ -31,44 +30,9 @@ fn puzzle2(input: &String) {
 // We need to represent an infinity grid. We're only interested in the ones with a value and those
 // directly around them though. Probably a map would just suffice.
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
-struct Location {
-    x: isize,
-    y: isize,
-}
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-struct Bounds {
-    top: isize,
-    left: isize,
-    width: isize,
-    height: isize,
-}
-
-impl Bounds {
-    fn grow(&mut self, by: isize) {
-        self.top -= by;
-        self.left -= by;
-        self.width += 2 * by;
-        self.height += 2 * by;
-    }
-
-    fn y(&self) -> RangeInclusive<isize> {
-        self.top..=self.top + self.height
-    }
-
-    fn x(&self) -> RangeInclusive<isize> {
-        self.left..=self.left + self.width
-    }
-
-    fn contains(&self, pixel: &Location) -> bool {
-        self.x().contains(&pixel.x) && self.y().contains(&pixel.y)
-    }
-}
-
 #[derive(Eq, PartialEq, Clone)]
 struct Image {
-    pixels: HashMap<Location, bool>,
+    pixels: HashMap<Point, bool>,
     outer_value: bool,
     bounds: Bounds,
 }
@@ -81,7 +45,7 @@ impl std::fmt::Display for Image {
         // Print, to make the image better understandable, we include 2 pixels around the map limits.
         for y in bounds.y() {
             for x in bounds.x() {
-                write!(f, "{}", match self.get_pixel(&Location { x, y }) {
+                write!(f, "{}", match self.get_pixel(&Point { x, y }) {
                     true => '#',
                     false => '.'
                 })?;
@@ -100,8 +64,8 @@ impl std::fmt::Debug for Image {
 }
 
 impl Image {
-    fn new(pixels: HashMap<Location, bool>, outer_value: bool) -> Self {
-        let locations: Vec<&Location> = pixels.keys().collect();
+    fn new(pixels: HashMap<Point, bool>, outer_value: bool) -> Self {
+        let locations: Vec<&Point> = pixels.keys().collect();
         let min_x = locations.iter().map(|l| l.x).min().unwrap_or(0);
         let max_x = locations.iter().map(|l| l.x).max().unwrap_or(0);
         let min_y = locations.iter().map(|l| l.y).min().unwrap_or(0);
@@ -110,12 +74,7 @@ impl Image {
         Image {
             pixels,
             outer_value,
-            bounds: Bounds {
-                top: min_y,
-                left: min_x,
-                width: max_x - min_x,
-                height: max_y - min_y,
-            },
+            bounds: Bounds::from_tlbr(min_y, min_x, max_y, max_x)
         }
     }
 
@@ -130,21 +89,21 @@ impl Image {
 
         for y in bounds.y() {
             for x in bounds.x() {
-                let value = self.get_value(&Location { x, y });
-                pixels.insert(Location { x, y }, enhancement[value]);
+                let value = self.get_value(&Point { x, y });
+                pixels.insert(Point { x, y }, enhancement[value]);
             }
         }
 
         Image::new(pixels, outer_value)
     }
 
-    fn get_value(&self, pixel: &Location) -> usize {
+    fn get_value(&self, pixel: &Point) -> usize {
         let mut result = 0;
 
         for y in pixel.y - 1..=pixel.y + 1 {
             for x in pixel.x - 1..=pixel.x + 1 {
                 result <<= 1;
-                result += match self.get_pixel(&Location { x, y }) {
+                result += match self.get_pixel(&Point { x, y }) {
                     true => 1,
                     false => 0
                 };
@@ -154,7 +113,7 @@ impl Image {
         result
     }
 
-    fn get_pixel(&self, pixel: &Location) -> bool {
+    fn get_pixel(&self, pixel: &Point) -> bool {
         if !self.bounds.contains(pixel) {
             self.outer_value
         } else {
@@ -199,7 +158,7 @@ impl FromStr for Puzzle {
         for y in 0..grid.len() {
             let line = &grid[y];
             for x in 0..line.len() {
-                pixels.insert(Location { x: x as isize, y: y as isize }, line[x]);
+                pixels.insert(Point { x: x as isize, y: y as isize }, line[x]);
             }
         }
 

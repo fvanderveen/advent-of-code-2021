@@ -8,7 +8,7 @@ pub const DAY9: Day = Day {
 };
 
 fn puzzle1(input: &String) {
-    let map: Grid = input.parse().unwrap();
+    let map: Grid<usize> = input.parse().unwrap();
     let values: Option<Vec<usize>> = map.find_low_spots().iter().map(|p| map.get(p).map(|v| v + 1)).collect();
     let result = values.map(|v| v.iter().sum::<usize>()).unwrap();
 
@@ -17,7 +17,7 @@ fn puzzle1(input: &String) {
 
 fn puzzle2(input: &String) {
     // Get the product of the three largest basins, size = number of cells
-    let map: Grid = input.parse().unwrap();
+    let map: Grid<usize> = input.parse().unwrap();
 
     let mut basins: Vec<usize> = map.find_low_spots().into_iter().map(|p| map.get_basin(p).len()).collect();
     // Sort inverted
@@ -31,21 +31,18 @@ fn puzzle2(input: &String) {
     println!("Puzzle 2 answer: {}", result);
 }
 
-impl Grid {
+impl Grid<usize> {
     fn find_low_spots(&self) -> Vec<Point> {
         let mut result = vec![];
 
-        for y in 0..self.height {
-            for x in 0..self.width {
-                let point: Point = (x, y).into();
-                match self.get(&point) {
-                    Some(v) => {
-                        if self.get_adjacent(&point, Directions::NonDiagonal).into_iter().all(|a| v < a) {
-                            result.push(point)
-                        }
+        for point in self.points() {
+            match self.get(&point) {
+                Some(v) => {
+                    if self.get_adjacent(&point, Directions::NonDiagonal).into_iter().all(|a| v < a) {
+                        result.push(point)
                     }
-                    None => {}
                 }
+                None => {}
             }
         }
 
@@ -54,7 +51,7 @@ impl Grid {
 
     fn get_basin(&self, p: Point) -> Vec<usize> {
         // A basin is all connected points to 'p' that are less than 9
-        fn loop_get_basin(map: &Grid, current: Point, visited: &mut Vec<Point>) -> Vec<usize> {
+        fn loop_get_basin(map: &Grid<usize>, current: Point, visited: &mut Vec<Point>) -> Vec<usize> {
             let mut result = vec![];
             if visited.contains(&current) {
                 return result;
@@ -88,18 +85,14 @@ impl Grid {
 mod tests {
     use crate::days::day09::{Grid};
 
-    fn get_example_map() -> Grid {
-        Grid {
-            width: 10,
-            height: 5,
-            cells: vec![
-                vec![2, 1, 9, 9, 9, 4, 3, 2, 1, 0],
-                vec![3, 9, 8, 7, 8, 9, 4, 9, 2, 1],
-                vec![9, 8, 5, 6, 7, 8, 9, 8, 9, 2],
-                vec![8, 7, 6, 7, 8, 9, 6, 7, 8, 9],
-                vec![9, 8, 9, 9, 9, 6, 5, 6, 7, 8],
-            ],
-        }
+    fn get_example_map() -> Grid<usize> {
+        vec![
+            vec![2, 1, 9, 9, 9, 4, 3, 2, 1, 0],
+            vec![3, 9, 8, 7, 8, 9, 4, 9, 2, 1],
+            vec![9, 8, 5, 6, 7, 8, 9, 8, 9, 2],
+            vec![8, 7, 6, 7, 8, 9, 6, 7, 8, 9],
+            vec![9, 8, 9, 9, 9, 6, 5, 6, 7, 8],
+        ].try_into().unwrap()
     }
 
     #[test]

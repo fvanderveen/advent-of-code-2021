@@ -103,11 +103,12 @@ struct FoldInstruction {
 impl FoldInstruction {
     /// Apply this instruction to the given point.
     fn apply(&self, point: &Point) -> Point {
+        let fold: isize = self.value as isize;
         match self.axis {
-            FoldAxis::X if point.x <= self.value => Point { x: point.x, y: point.y },
-            FoldAxis::X => Point { x: self.value - (point.x - self.value), y: point.y },
-            FoldAxis::Y if point.y <= self.value => Point { x: point.x, y: point.y },
-            FoldAxis::Y => Point { x: point.x, y: self.value - (point.y - self.value) }
+            FoldAxis::X if point.x <= fold => Point { x: point.x, y: point.y },
+            FoldAxis::X => Point { x: fold - (point.x - fold), y: point.y },
+            FoldAxis::Y if point.y <= fold => Point { x: point.x, y: point.y },
+            FoldAxis::Y => Point { x: point.x, y: fold - (point.y - fold) }
         }
     }
 }

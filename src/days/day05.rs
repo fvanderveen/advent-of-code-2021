@@ -1,7 +1,7 @@
 use std::cmp::max;
 use std::collections::HashMap;
 use crate::days::Day;
-use crate::util::geometry::{Point, Line, GetPoints};
+use crate::util::geometry::{Point, Line, Grid};
 
 pub const DAY5: Day = Day {
     puzzle1,
@@ -14,7 +14,7 @@ fn puzzle1(input: &String) {
         Ok(v) => build_vent_map(&v, true)
     };
 
-    let result = map.cells.values().filter(|c| c.value >= 2).count();
+    let result = map.values().iter().filter(|c| c.value >= 2).count();
     println!("Puzzle 1 answer: {}", result);
 }
 
@@ -24,7 +24,7 @@ fn puzzle2(input: &String) {
         Ok(v) => build_vent_map(&v, false)
     };
 
-    let result = map.cells.values().filter(|c| c.value >= 2).count();
+    let result = map.values().iter().filter(|c| c.value >= 2).count();
     println!("Puzzle 2 answer: {}", result);
 }
 
@@ -48,17 +48,18 @@ fn parse_lines(input: &str) -> Result<Vec<Line>, String> {
     input.lines().filter(|l| !l.trim().is_empty()).map(|l| parse_line(l)).collect()
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Default)]
 struct Cell {
     value: u128,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-struct VentMap {
-    cells: HashMap<Point, Cell>,
-    width: usize,
-    height: usize,
+impl std::fmt::Display for Cell {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
 }
+
+type VentMap = Grid<Cell>;
 
 fn build_vent_map(lines: &Vec<Line>, only_horizontal_or_vertical: bool) -> VentMap {
     let mut width: usize = 0;
@@ -77,7 +78,7 @@ fn build_vent_map(lines: &Vec<Line>, only_horizontal_or_vertical: bool) -> VentM
         }
     }
 
-    VentMap { cells: map, width, height }
+    Grid::new(map)
 }
 
 fn is_horizontal_or_vertical_line(line: &Line) -> bool {
@@ -87,7 +88,8 @@ fn is_horizontal_or_vertical_line(line: &Line) -> bool {
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-    use crate::days::day05::{build_vent_map, Cell, Line, parse_line, parse_lines, parse_point, Point, VentMap};
+    use crate::days::day05::{build_vent_map, Cell, Line, parse_line, parse_lines, parse_point, Point};
+    use crate::util::geometry::Grid;
 
     #[test]
     fn test_parse_point() {
@@ -107,11 +109,11 @@ mod tests {
         assert!(parse_line("12,0 <- 12,5").is_err());
     }
 
-    const fn point(x: usize, y: usize) -> Point {
+    const fn point(x: isize, y: isize) -> Point {
         Point { x, y }
     }
 
-    const fn line(x1: usize, y1: usize, x2: usize, y2: usize) -> Line {
+    const fn line(x1: isize, y1: isize, x2: isize, y2: isize) -> Line {
         Line { start: point(x1, y1), end: point(x2, y2) }
     }
 
@@ -152,83 +154,75 @@ mod tests {
     fn test_build_vent_map_puzzle1() {
         let result = build_vent_map(&EXAMPLE_LINES.to_vec(), true);
 
-        assert_eq!(result, VentMap {
-            cells: HashMap::from([
-                (point(7, 0), Cell { value: 1 }),
-                (point(2, 1), Cell { value: 1 }),
-                (point(7, 1), Cell { value: 1 }),
-                (point(2, 2), Cell { value: 1 }),
-                (point(7, 2), Cell { value: 1 }),
-                (point(7, 3), Cell { value: 1 }),
-                (point(1, 4), Cell { value: 1 }),
-                (point(2, 4), Cell { value: 1 }),
-                (point(3, 4), Cell { value: 2 }),
-                (point(4, 4), Cell { value: 1 }),
-                (point(5, 4), Cell { value: 1 }),
-                (point(6, 4), Cell { value: 1 }),
-                (point(7, 4), Cell { value: 2 }),
-                (point(8, 4), Cell { value: 1 }),
-                (point(9, 4), Cell { value: 1 }),
-                (point(0, 9), Cell { value: 2 }),
-                (point(1, 9), Cell { value: 2 }),
-                (point(2, 9), Cell { value: 2 }),
-                (point(3, 9), Cell { value: 1 }),
-                (point(4, 9), Cell { value: 1 }),
-                (point(5, 9), Cell { value: 1 }),
-            ]),
-            width: 10,
-            height: 10,
-        });
+        assert_eq!(result, Grid::new(HashMap::from([
+            (point(7, 0), Cell { value: 1 }),
+            (point(2, 1), Cell { value: 1 }),
+            (point(7, 1), Cell { value: 1 }),
+            (point(2, 2), Cell { value: 1 }),
+            (point(7, 2), Cell { value: 1 }),
+            (point(7, 3), Cell { value: 1 }),
+            (point(1, 4), Cell { value: 1 }),
+            (point(2, 4), Cell { value: 1 }),
+            (point(3, 4), Cell { value: 2 }),
+            (point(4, 4), Cell { value: 1 }),
+            (point(5, 4), Cell { value: 1 }),
+            (point(6, 4), Cell { value: 1 }),
+            (point(7, 4), Cell { value: 2 }),
+            (point(8, 4), Cell { value: 1 }),
+            (point(9, 4), Cell { value: 1 }),
+            (point(0, 9), Cell { value: 2 }),
+            (point(1, 9), Cell { value: 2 }),
+            (point(2, 9), Cell { value: 2 }),
+            (point(3, 9), Cell { value: 1 }),
+            (point(4, 9), Cell { value: 1 }),
+            (point(5, 9), Cell { value: 1 }),
+        ])));
     }
 
     #[test]
     fn test_build_vent_map_puzzle2() {
         let result = build_vent_map(&EXAMPLE_LINES.to_vec(), false);
 
-        assert_eq!(result, VentMap {
-            cells: HashMap::from([
-                (point(0, 0), Cell { value: 1 }),
-                (point(2, 0), Cell { value: 1 }),
-                (point(7, 0), Cell { value: 1 }),
-                (point(8, 0), Cell { value: 1 }),
-                (point(1, 1), Cell { value: 1 }),
-                (point(2, 1), Cell { value: 1 }),
-                (point(3, 1), Cell { value: 1 }),
-                (point(7, 1), Cell { value: 2 }),
-                (point(2, 2), Cell { value: 2 }),
-                (point(4, 2), Cell { value: 1 }),
-                (point(6, 2), Cell { value: 1 }),
-                (point(7, 2), Cell { value: 1 }),
-                (point(8, 2), Cell { value: 1 }),
-                (point(3, 3), Cell { value: 1 }),
-                (point(5, 3), Cell { value: 2 }),
-                (point(7, 3), Cell { value: 2 }),
-                (point(1, 4), Cell { value: 1 }),
-                (point(2, 4), Cell { value: 1 }),
-                (point(3, 4), Cell { value: 2 }),
-                (point(4, 4), Cell { value: 3 }),
-                (point(5, 4), Cell { value: 1 }),
-                (point(6, 4), Cell { value: 3 }),
-                (point(7, 4), Cell { value: 2 }),
-                (point(8, 4), Cell { value: 1 }),
-                (point(9, 4), Cell { value: 1 }),
-                (point(3, 5), Cell { value: 1 }),
-                (point(5, 5), Cell { value: 2 }),
-                (point(2, 6), Cell { value: 1 }),
-                (point(6, 6), Cell { value: 1 }),
-                (point(1, 7), Cell { value: 1 }),
-                (point(7, 7), Cell { value: 1 }),
-                (point(0, 8), Cell { value: 1 }),
-                (point(8, 8), Cell { value: 1 }),
-                (point(0, 9), Cell { value: 2 }),
-                (point(1, 9), Cell { value: 2 }),
-                (point(2, 9), Cell { value: 2 }),
-                (point(3, 9), Cell { value: 1 }),
-                (point(4, 9), Cell { value: 1 }),
-                (point(5, 9), Cell { value: 1 }),
-            ]),
-            width: 10,
-            height: 10,
-        });
+        assert_eq!(result, Grid::new(HashMap::from([
+            (point(0, 0), Cell { value: 1 }),
+            (point(2, 0), Cell { value: 1 }),
+            (point(7, 0), Cell { value: 1 }),
+            (point(8, 0), Cell { value: 1 }),
+            (point(1, 1), Cell { value: 1 }),
+            (point(2, 1), Cell { value: 1 }),
+            (point(3, 1), Cell { value: 1 }),
+            (point(7, 1), Cell { value: 2 }),
+            (point(2, 2), Cell { value: 2 }),
+            (point(4, 2), Cell { value: 1 }),
+            (point(6, 2), Cell { value: 1 }),
+            (point(7, 2), Cell { value: 1 }),
+            (point(8, 2), Cell { value: 1 }),
+            (point(3, 3), Cell { value: 1 }),
+            (point(5, 3), Cell { value: 2 }),
+            (point(7, 3), Cell { value: 2 }),
+            (point(1, 4), Cell { value: 1 }),
+            (point(2, 4), Cell { value: 1 }),
+            (point(3, 4), Cell { value: 2 }),
+            (point(4, 4), Cell { value: 3 }),
+            (point(5, 4), Cell { value: 1 }),
+            (point(6, 4), Cell { value: 3 }),
+            (point(7, 4), Cell { value: 2 }),
+            (point(8, 4), Cell { value: 1 }),
+            (point(9, 4), Cell { value: 1 }),
+            (point(3, 5), Cell { value: 1 }),
+            (point(5, 5), Cell { value: 2 }),
+            (point(2, 6), Cell { value: 1 }),
+            (point(6, 6), Cell { value: 1 }),
+            (point(1, 7), Cell { value: 1 }),
+            (point(7, 7), Cell { value: 1 }),
+            (point(0, 8), Cell { value: 1 }),
+            (point(8, 8), Cell { value: 1 }),
+            (point(0, 9), Cell { value: 2 }),
+            (point(1, 9), Cell { value: 2 }),
+            (point(2, 9), Cell { value: 2 }),
+            (point(3, 9), Cell { value: 1 }),
+            (point(4, 9), Cell { value: 1 }),
+            (point(5, 9), Cell { value: 1 }),
+        ])));
     }
 }

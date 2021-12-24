@@ -9,7 +9,7 @@ pub const DAY15: Day = Day {
 };
 
 fn puzzle1(input: &String) {
-    let grid: Grid = input.parse().unwrap();
+    let grid: Grid<usize> = input.parse().unwrap();
 
     let score = find_lowest_risk_path_cost(&grid).unwrap();
 
@@ -17,7 +17,7 @@ fn puzzle1(input: &String) {
 }
 
 fn puzzle2(input: &String) {
-    let grid: Grid = input.parse().unwrap();
+    let grid: Grid<usize> = input.parse().unwrap();
     let no_the_real_grid = build_real_map(&grid);
 
     let score = find_lowest_risk_path_cost(&no_the_real_grid).unwrap();
@@ -45,12 +45,12 @@ impl PartialOrd for DijkstraEntry {
     }
 }
 
-fn find_lowest_risk_path_cost(grid: &Grid) -> Option<usize> {
+fn find_lowest_risk_path_cost(grid: &Grid<usize>) -> Option<usize> {
     // Start at top-left, end at bottom-right
     // How bad will brute force perform? -> Very, very bad. 😂
     // Since this is pretty much shortest path, let's see if I can build Dijkstra.
 
-    fn dijkstra(grid: &Grid, target: &Point) -> Option<usize> {
+    fn dijkstra(grid: &Grid<usize>, target: &Point) -> Option<usize> {
         let mut dist = HashMap::new();
         let mut queue = BinaryHeap::new();
 
@@ -86,32 +86,30 @@ fn find_lowest_risk_path_cost(grid: &Grid) -> Option<usize> {
         None
     }
 
-    let target = Point { x: grid.width - 1, y: grid.height - 1 };
+    let target = Point { x: grid.bounds.right() - 1, y: grid.bounds.bottom() - 1 };
     dijkstra(grid, &target)
 }
 
-fn build_real_map(segment: &Grid) -> Grid {
+fn build_real_map(segment: &Grid<usize>) -> Grid<usize> {
     // The real map is apparently 5 times as large. Here's hoping I did dijkstra right for puzzle 1.
 
     // To stitch the real map together, we copy the initial segment to the right/bottom, while increasing
     // all costs by 1. A 9 will go back to 1.
 
-    let height = segment.height * 5;
-    let width = segment.width * 5;
-    let mut cells: Vec<Vec<usize>> = vec![vec![0; width]; height];
+    let mut cells = HashMap::new();
 
     for x in 0..5 {
         for y in 0..5 {
             for point in segment.points() {
-                let new_x = point.x + x * segment.width;
-                let new_y = point.y + y * segment.height;
+                let new_x = point.x + (x * segment.bounds.width) as isize;
+                let new_y = point.y + (y * segment.bounds.height) as isize;
                 let value = segment.get(&point).unwrap_or(0) + x + y;
-                cells[new_y][new_x] = if value > 9 { value % 9 } else { value }
+                cells.insert((new_x,new_y).into(), if value > 9 { value % 9 } else { value });
             }
         }
     }
 
-    Grid { height, width, cells }
+    Grid::new(cells)
 }
 
 #[cfg(test)]
@@ -133,32 +131,25 @@ mod tests {
 
     #[test]
     fn test_find_lowest_risk_path_cost() {
-        let grid: Grid = EXAMPLE_INPUT.parse().unwrap();
+        let grid: Grid<usize> = EXAMPLE_INPUT.parse().unwrap();
         assert_eq!(find_lowest_risk_path_cost(&grid), Some(40));
     }
 
     #[test]
     fn test_build_real_map() {
-        let grid = Grid { width: 1, height: 1, cells: vec![vec![8]] };
+        let grid: Grid<usize> = vec![vec![8]].try_into().unwrap();
 
         let big_grid = build_real_map(&grid);
-        assert_eq!(big_grid, Grid {
-            width: 5,
-            height: 5,
-            cells: vec![
+        assert_eq!(big_grid, vec![
                 vec![8, 9, 1, 2, 3],
                 vec![9, 1, 2, 3, 4],
                 vec![1, 2, 3, 4, 5],
                 vec![2, 3, 4, 5, 6],
                 vec![3, 4, 5, 6, 7]
-            ]
-        });
+            ].try_into().unwrap());
 
         let big_example_grid = build_real_map(&EXAMPLE_INPUT.parse().unwrap());
-        assert_eq!(big_example_grid, Grid {
-            width: 50,
-            height: 50,
-            cells: vec![
+        assert_eq!(big_example_grid, vec![
                 vec![1,1,6,3,7,5,1,7,4,2,2,2,7,4,8,6,2,8,5,3,3,3,8,5,9,7,3,9,6,4,4,4,9,6,1,8,4,1,7,5,5,5,1,7,2,9,5,2,8,6],
                 vec![1,3,8,1,3,7,3,6,7,2,2,4,9,2,4,8,4,7,8,3,3,5,1,3,5,9,5,8,9,4,4,6,2,4,6,1,6,9,1,5,5,7,3,5,7,2,7,1,2,6],
                 vec![2,1,3,6,5,1,1,3,2,8,3,2,4,7,6,2,2,4,3,9,4,3,5,8,7,3,3,5,4,1,5,4,6,9,8,4,4,6,5,2,6,5,7,1,9,5,5,7,6,3],
@@ -209,13 +200,12 @@ mod tests {
                 vec![7,5,6,9,8,6,5,1,7,4,8,6,7,1,9,7,6,2,8,5,9,7,8,2,1,8,7,3,9,6,1,8,9,3,2,9,8,4,1,7,2,9,1,4,3,1,9,5,2,8],
                 vec![5,6,4,7,5,7,3,9,6,5,6,7,5,8,6,8,4,1,7,6,7,8,6,9,7,9,5,2,8,7,8,9,7,1,8,1,6,3,9,8,9,1,8,2,9,2,7,4,1,9],
                 vec![6,7,5,5,4,8,8,9,3,5,7,8,6,6,5,9,9,1,4,6,8,9,7,7,6,1,1,2,5,7,9,1,8,8,7,2,2,3,6,8,1,2,9,9,8,3,3,4,7,9]
-            ]
-        });
+            ].try_into().unwrap());
     }
 
     #[test]
     fn test_find_lowest_risk_on_real_map() {
-        let grid: Grid = EXAMPLE_INPUT.parse().unwrap();
+        let grid: Grid<usize> = EXAMPLE_INPUT.parse().unwrap();
         let real_grid = build_real_map(&grid);
 
         assert_eq!(find_lowest_risk_path_cost(&real_grid), Some(315));
