@@ -26,12 +26,12 @@ pub fn create_day(day: i32) -> Result<(), String> {
                 Ok(v) => { v }
                 Err(e) => { return Err(format!("Could not read day template: {}", e)); }
             };
-            let days_mod_content = match read_to_string(module_path) {
+            let days_mod_content = match read_to_string(Path::new(&module_path)) {
                 Ok(v) => { v }
                 Err(e) => { return Err(format!("Could not read days module file: {}", e)); }
             };
 
-            let import_regex = match RegexBuilder::new("^(\\s*)(// « add day import »)$").multi_line(true).build() {
+            let import_regex = match RegexBuilder::new("^(\\s*)(// « add day import »)").multi_line(true).build() {
                 Ok(r) => { r }
                 Err(e) => { return Err(format!("{}", e)); }
             };
@@ -41,6 +41,7 @@ pub fn create_day(day: i32) -> Result<(), String> {
             };
 
             if !import_regex.is_match(days_mod_content.as_str()) {
+                println!("{}", days_mod_content);
                 return Err("Could not find import comment in days module".to_string());
             }
             if !match_regex.is_match(days_mod_content.as_str()) {
