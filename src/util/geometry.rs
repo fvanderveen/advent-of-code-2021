@@ -50,6 +50,19 @@ impl FromStr for Point {
     }
 }
 
+impl Ord for Point {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.y.cmp(&other.y)
+            .then_with(|| self.x.cmp(&other.x))
+    }
+}
+
+impl PartialOrd for Point {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 #[cfg(test)]
 mod point_tests {
     use crate::util::geometry::Point;
@@ -70,6 +83,25 @@ mod point_tests {
     #[test]
     fn test_format() {
         assert_eq!(format!("{}", Point { x: 5, y: -10 }), "(5,-10)");
+    }
+    
+    #[test]
+    fn test_ord() {
+        let mut points = vec![
+            Point { x: 12, y: 1 },
+            Point { x: 2, y: 5},
+            Point { x: 4, y: 3 },
+            Point { x: 1, y: 1 },
+            Point { x: 5, y: 3 }
+        ];
+        points.sort();
+        assert_eq!(points, vec![
+            Point { x: 1, y: 1 },
+            Point { x: 12, y: 1 },
+            Point { x: 4, y: 3 },
+            Point { x: 5, y: 3 },
+            Point { x: 2, y: 5},
+        ]);
     }
 }
 
@@ -374,6 +406,10 @@ impl<T> Grid<T> where T: Clone + Default {
         self.cells.get_mut(p)
     }
 
+    pub fn set(&mut self, p: Point, v: T) {
+        self.cells.insert(p, v);
+    }
+    
     pub fn get_adjacent(&self, p: &Point, directions: Directions) -> Vec<T> {
         self.get_adjacent_points(p, directions).iter().filter_map(|p| self.get(p)).collect()
     }
@@ -419,6 +455,10 @@ impl<T> Grid<T> where T: Clone + Default {
 
     pub fn values(&self) -> Vec<T> {
         self.points().iter().map(|p| self.get(p).unwrap_or_default()).collect()
+    }
+    
+    pub fn entries(&self) -> Vec<(Point, T)> {
+        self.cells.iter().map(|(p, t)| (p.clone(), t.clone())).collect()
     }
 }
 
